@@ -20,19 +20,27 @@ import hashlib, os, re, shutil, sys
 
 # ---------------------------------------------------------------- 설정값 ---
 REPORTER = "김승모"                       # 노컷 원문 author 메타: 'CBS노컷뉴스 김승모 기자'
-BEATS_TITLE = "재경부·국가데이터처"
+BEATS_TITLE = "재경부·기획예산처·국가데이터처·관세청"
 STORE_PREFIX = "nm-moef-"                 # 브라우저 저장키 — 원본('nm-live-')과 같은 출처
                                           # (tolibre.github.io)라 반드시 달라야 한다
-REPORT_ORDER_JS = "['재경부','국가데이터처']"
+REPORT_ORDER_JS = "['재경부','기획예산처','국가데이터처','관세청']"
 
 NEW_BASE_KEYWORDS = '''BASE_KEYWORDS = [
     # 뉴스레이다 재경부·국가데이터처판(tools/make_variant.py가 생성 — 직접 고치지 말 것).
     # 그룹명은 원본 당직 모드 매핑(DUTY_KEYWORD_GROUPS)을 그대로 쓴다:
-    # 재정경제부·재경부 → '재경부', 국가데이터처·데이터처 → '국가데이터처'.
+    # 재정경제부·재경부 → '재경부', 기획예산처·예산처 → '기획예산처', 국가데이터처·데이터처 → '국가데이터처'.
+    # 관세청은 원본에 없어 아래 KEYWORD_GROUPS 줄에서 매핑을 더한다(2026-10-14 추가).
     "재정경제부", "재경부",
+    "기획예산처", "예산처",
     "국가데이터처", "데이터처",
+    "관세청",
 ]
 '''
+
+# 관세청을 KEYWORD_GROUPS에 넣는다 — 그래야 클러스터링의 '출입처명 토큰'(CLUSTER_AGENCY_TOKENS,
+# KEYWORD_GROUPS에서 유도)에 들어가 '관세청' 한 단어로 서로 다른 사안이 묶이지 않는다.
+NEW_GROUPS_LINE = ("KEYWORD_GROUPS.update(DUTY_KEYWORD_GROUPS)\n"
+                   "KEYWORD_GROUPS.update({'관세청': '관세청'})   # 재경부판(생성기)\n")
 
 # (파일, 찾을 문자열 또는 정규식, 바꿀 문자열, 원본에서 나와야 하는 횟수, 정규식 여부)
 NM = "news_monitor.py"
@@ -45,6 +53,7 @@ REPLACEMENTS = [
     (NM, r"BASE_KEYWORDS = \[\n(?:.*\n)*?\]\n", NEW_BASE_KEYWORDS, 1, True),
     (NM, 'TEMP_KEYWORDS = {\n    "대미투자": "2026-09-23",\n}\n',
          "TEMP_KEYWORDS = {}\n", 1, False),
+    (NM, "KEYWORD_GROUPS.update(DUTY_KEYWORD_GROUPS)\n", NEW_GROUPS_LINE, 1, False),
     # ---- news_monitor.py: 바이라인(본인 기사 섹션) ----
     (NM, 'BYLINE_NAME = "김광일"', f'BYLINE_NAME = "{REPORTER}"', 1, False),
     (NM, 'BYLINE_SECTION = "김광일 기자"', f'BYLINE_SECTION = "{REPORTER} 기자"', 1, False),
@@ -53,13 +62,15 @@ REPLACEMENTS = [
     (RP, "var REPORT_ORDER = ['방미통위','공정위','과기정통부','우주항공청'];",
          f"var REPORT_ORDER = {REPORT_ORDER_JS};", 2, False),
     (RP, "출입처 순서(방미통위 → 공정위 → 과기정통부 → 우주청 → 2진)",
-         "출입처 순서(재경부 → 국가데이터처)", 2, False),
+         "출입처 순서(재경부 → 기획예산처 → 국가데이터처 → 관세청)", 2, False),
     # ---- render_page.py: 브라우저 저장키(같은 출처의 원본 페이지와 섞이지 않게) ----
     (RP, "'nm-live-", f"'{STORE_PREFIX}", 6, False),
     # ---- render_page.py: 출입처 식별색 ----
     (RP, '[data-g="공정위"], [data-b="공정위"]', '[data-g="재경부"], [data-b="재경부"]', 1, False),
     (RP, '[data-g="과기정통부"], [data-b="과기정통부"]',
          '[data-g="국가데이터처"], [data-b="국가데이터처"]', 1, False),
+    (RP, '[data-g="방미통위"], [data-b="방미통위"]', '[data-g="기획예산처"], [data-b="기획예산처"]', 1, False),
+    (RP, '[data-g="우주항공청"], [data-b="우주항공청"]', '[data-g="관세청"], [data-b="관세청"]', 1, False),
     (RP, '[data-g="김광일 기자"], [data-b="김광일 기자"]',
          f'[data-g="{REPORTER} 기자"], [data-b="{REPORTER} 기자"]', 1, False),
     # ---- render_page.py: 기기 연동 숨김 ----
@@ -88,8 +99,8 @@ FORBIDDEN = {
 }
 # 생성한 news_monitor.py를 별도 프로세스로 import해 확인할 값(당직·임시 키워드가 꺼진 날짜 기준).
 EXPECT = {
-    "KEYWORDS": ["재정경제부", "재경부", "국가데이터처", "데이터처"],
-    "GROUP_ORDER": ["재경부", "국가데이터처"],
+    "KEYWORDS": ["재정경제부", "재경부", "기획예산처", "예산처", "국가데이터처", "데이터처", "관세청"],
+    "GROUP_ORDER": ["재경부", "기획예산처", "국가데이터처", "관세청"],
     "BYLINE_NAME": REPORTER,
     "BYLINE_SECTION": f"{REPORTER} 기자",
 }
