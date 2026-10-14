@@ -2,7 +2,7 @@
 <html lang="ko"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>뉴스레이다 · 재경부·국가데이터처</title>
+<title>뉴스레이다 · 재경부·기획예산처·국가데이터처·관세청</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='15' fill='%2308224B'/><circle cx='16' cy='16' r='10' fill='none' stroke='%23fff' stroke-opacity='.45' stroke-width='1.5'/><circle cx='16' cy='16' r='5' fill='none' stroke='%23fff' stroke-opacity='.45' stroke-width='1.5'/><path d='M16 16 L16 3 A13 13 0 0 1 27.3 9.5 Z' fill='%23fff' fill-opacity='.8'/><circle cx='22' cy='11' r='2' fill='%23fff'/></svg>">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
@@ -71,8 +71,8 @@
 section, .beat{--og:var(--o-etc); --ob:var(--o-etc-bg)}
 [data-g="재경부"], [data-b="재경부"]{--og:var(--o-ftc); --ob:var(--o-ftc-bg)}
 [data-g="국가데이터처"], [data-b="국가데이터처"]{--og:var(--o-msit); --ob:var(--o-msit-bg)}
-[data-g="방미통위"], [data-b="방미통위"]{--og:var(--o-kcc); --ob:var(--o-kcc-bg)}
-[data-g="우주항공청"], [data-b="우주항공청"]{--og:var(--o-kasa); --ob:var(--o-kasa-bg)}
+[data-g="기획예산처"], [data-b="기획예산처"]{--og:var(--o-kcc); --ob:var(--o-kcc-bg)}
+[data-g="관세청"], [data-b="관세청"]{--og:var(--o-kasa); --ob:var(--o-kasa-bg)}
 [data-g="김승모 기자"], [data-b="김승모 기자"]{--og:var(--o-me); --ob:var(--o-me-bg)}
 
 *{box-sizing:border-box}
@@ -310,7 +310,7 @@ a.title:visited{color:var(--ink-900)}
     <div class="panel-foot">
       <button class="btn primary" type="button" id="copy">복사</button>
       <button class="btn" type="button" id="unpick" hidden>이 구간 선택 해제</button>
-      <span class="hint" id="copyhint">단독 먼저, 그다음 출입처 순서(재경부 → 국가데이터처). 본인 기사는 &lt;기처리&gt;로 따로 모읍니다. 직접 고쳐도 됩니다.</span>
+      <span class="hint" id="copyhint">단독 먼저, 그다음 출입처 순서(재경부 → 기획예산처 → 국가데이터처 → 관세청). 본인 기사는 &lt;기처리&gt;로 따로 모읍니다. 직접 고쳐도 됩니다.</span>
     </div>
   </div>
 </div>
@@ -328,7 +328,7 @@ a.title:visited{color:var(--ink-900)}
 
 <script>
 (function(){
-  var REPORT_ORDER = ['재경부','국가데이터처'];
+  var REPORT_ORDER = ['재경부','기획예산처','국가데이터처','관세청'];
   var SCOOP = '🔥', FLASH = '⚡';
   var WD = '일월화수목금토';
   var STORE = 'nm-moef-picks-v1';
