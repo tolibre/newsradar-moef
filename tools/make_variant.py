@@ -52,6 +52,8 @@ REPLACEMENTS = [
     (NM, "ACTOR_ASSIGN = True\n", "ACTOR_ASSIGN = False   # 재경부판(생성기) — 김광일판 확인 뒤 켤 예정\n", 1, False),
     (NM, "LIVE_ACTOR_BONUS = 2.0\n", "LIVE_ACTOR_BONUS = 0   # 재경부판(생성기)\n", 1, False),
     (NM, 'LIVE_MEDIA_BOOST = {"*": [(LIVE_MEDIA_MAJOR, 1.0)]}\n', "LIVE_MEDIA_BOOST = {}   # 재경부판(생성기)\n", 1, False),
+    # 원본 0-37(사진 설명형 제목 추가 거르기)도 김승모 기자 판 반영 때 함께 켠다.
+    (NM, r"CAPTION_EXTRA = \[\n(?:    .*\n)*?\]\n", "CAPTION_EXTRA = []   # 재경부판(생성기) — 김승모판 반영 때 켤 예정\n", 1, True),
     # ---- news_monitor.py: 출입처 ----
     (NM, r"DUTY_DATES = \{\n(?:    .*\n)*?\}\n",
          "DUTY_DATES = {}   # 재경부판은 당직 모드를 쓰지 않는다(출입처가 곧 기본 검색어)\n", 1, True),
