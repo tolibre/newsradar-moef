@@ -47,6 +47,11 @@ NM = "news_monitor.py"
 RP = "render_page.py"
 
 REPLACEMENTS = [
+    # ---- news_monitor.py: 원본 0-35(주체 출입처 배정·'전체' 탭 주체 가점·매체 가점)는 아직 끈다 ----
+    # 사용자 결정(2026-10-15): 김광일판에서 먼저 써 보고 괜찮으면 재경부판에도 켠다. 켤 땐 이 세 줄을 지울 것.
+    (NM, "ACTOR_ASSIGN = True\n", "ACTOR_ASSIGN = False   # 재경부판(생성기) — 김광일판 확인 뒤 켤 예정\n", 1, False),
+    (NM, "LIVE_ACTOR_BONUS = 2.0\n", "LIVE_ACTOR_BONUS = 0   # 재경부판(생성기)\n", 1, False),
+    (NM, 'LIVE_MEDIA_BOOST = {"*": [(LIVE_MEDIA_MAJOR, 1.0)]}\n', "LIVE_MEDIA_BOOST = {}   # 재경부판(생성기)\n", 1, False),
     # ---- news_monitor.py: 출입처 ----
     (NM, r"DUTY_DATES = \{\n(?:    .*\n)*?\}\n",
          "DUTY_DATES = {}   # 재경부판은 당직 모드를 쓰지 않는다(출입처가 곧 기본 검색어)\n", 1, True),
@@ -103,6 +108,8 @@ EXPECT = {
     "GROUP_ORDER": ["재경부", "기획예산처", "국가데이터처", "관세청"],
     "BYLINE_NAME": REPORTER,
     "BYLINE_SECTION": f"{REPORTER} 기자",
+    "ACTOR_ASSIGN": False,
+    "LIVE_ACTOR_BONUS": 0,
 }
 
 
