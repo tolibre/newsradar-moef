@@ -47,13 +47,16 @@ NM = "news_monitor.py"
 RP = "render_page.py"
 
 REPLACEMENTS = [
-    # ---- news_monitor.py: 원본 0-35(주체 출입처 배정·'전체' 탭 주체 가점·매체 가점)는 아직 끈다 ----
-    # 사용자 결정(2026-10-15): 김광일판에서 먼저 써 보고 괜찮으면 재경부판에도 켠다. 켤 땐 이 세 줄을 지울 것.
-    (NM, "ACTOR_ASSIGN = True\n", "ACTOR_ASSIGN = False   # 재경부판(생성기) — 김광일판 확인 뒤 켤 예정\n", 1, False),
-    (NM, "LIVE_ACTOR_BONUS = 2.0\n", "LIVE_ACTOR_BONUS = 0   # 재경부판(생성기)\n", 1, False),
-    (NM, 'LIVE_MEDIA_BOOST = {"*": [(LIVE_MEDIA_MAJOR, 1.0)]}\n', "LIVE_MEDIA_BOOST = {}   # 재경부판(생성기)\n", 1, False),
-    # 원본 0-37(사진 설명형 제목 추가 거르기)도 김승모 기자 판 반영 때 함께 켠다.
-    (NM, r"CAPTION_EXTRA = \[\n(?:    .*\n)*?\]\n", "CAPTION_EXTRA = []   # 재경부판(생성기) — 김승모판 반영 때 켤 예정\n", 1, True),
+    # 원본 0-35(주체 출입처 배정·'전체' 탭 주체 가점 +2·주요 매체 가점 +1)·0-37(사진 설명형 제목 거르기)은
+    # 2026-10-15 사용자 결정("김승모 페이지도 김광일 페이지처럼")으로 원본 값 그대로 쓴다(끄는 치환 삭제).
+    # 기관장 이름 씨앗 — 재경부판 DB는 10/14 시작이라 학습분이 거의 없다(10/15: 박홍근 1명). 원본·재경부판 DB 제목의
+    # '기관 + 이름 + 직함' 실측(10/15)으로 채운다. DB 학습이 쌓이면 학습분이 우선한다. 인사가 바뀌면 고칠 것.
+    (NM, "ACTOR_PEOPLE_SEED = {}\n",
+         "ACTOR_PEOPLE_SEED = {'이형일': '재경부', '권대영': '재경부', '박홍기': '재경부', '구윤철': '재경부',\n"
+         "                     '박홍근': '기획예산처', '조용범': '기획예산처', '이명호': '국가데이터처', '안형준': '국가데이터처', '이종욱': '관세청'}   # 재경부판(생성기)\n", 1, False),
+    # ---- news_monitor.py: 보관 기간 ----
+    # 재경부판은 하루 약 2,000건(원본 1,300건) — 90일이면 약 18만 건·75~80MB로 GitHub 파일 한도(100MB)에 가깝다(2026-10-15 실측).
+    (NM, "RETENTION_DAYS = 90 ", "RETENTION_DAYS = 60 ", 1, False),
     # ---- news_monitor.py: 출입처 ----
     (NM, r"DUTY_DATES = \{\n(?:    .*\n)*?\}\n",
          "DUTY_DATES = {}   # 재경부판은 당직 모드를 쓰지 않는다(출입처가 곧 기본 검색어)\n", 1, True),
@@ -110,8 +113,9 @@ EXPECT = {
     "GROUP_ORDER": ["재경부", "기획예산처", "국가데이터처", "관세청"],
     "BYLINE_NAME": REPORTER,
     "BYLINE_SECTION": f"{REPORTER} 기자",
-    "ACTOR_ASSIGN": False,
-    "LIVE_ACTOR_BONUS": 0,
+    "RETENTION_DAYS": 60,
+    "ACTOR_ASSIGN": True,
+    "LIVE_ACTOR_BONUS": 2.0,
 }
 
 

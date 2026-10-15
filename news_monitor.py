@@ -717,7 +717,7 @@ ALERT_DIR  = os.path.join(BASE_DIR, "alerts")
 
 MAX_PAGES_PER_KEYWORD = 5      # 네이버: 키워드당 최대 5페이지(500건)까지 거슬러 수집
 DAILY_CALL_SOFT_LIMIT = 20000  # 일일 호출 안전장치 (한도 25,000의 80%)
-RETENTION_DAYS = 90            # DB 보관 기간(일). 이보다 오래된 기사는 자동 삭제. 0이면 삭제 안 함.
+RETENTION_DAYS = 60            # DB 보관 기간(일). 이보다 오래된 기사는 자동 삭제. 0이면 삭제 안 함.
 
 # KST는 파일 상단(설정부 앞)으로 옮김 — duty_active()가 임포트 시점에 쓰기 때문
 
@@ -1467,7 +1467,8 @@ def is_caption_like(title, strict=False):
 # 원제목 규칙은 그대로 검사(「M포토」·[한 컷] 같은 태그 — 위 PHOTO_TAGS 괄호에 없다). 나머지는 태그·매체 꼬리·끝 따옴표를 뗀
 # 제목에 적용하되, 아래면 기사로 보고 건너뛴다(일반 기사를 거르지 않기 위한 안전장치):
 #  - 큰따옴표·말줄임표·물음표·느낌표 / ARTICLE_ENDINGS / 최대 길이 초과
-#  - 사진 태그가 아닌 대괄호 코너명([사설]·[칼럼]·[기획①]·[CEO 라운지] 등 — 칼럼·기획 제목이 캡션처럼 생겼다)
+#  - 사진 태그가 아닌 대괄호 코너명([사설]·[칼럼]·[기획①]·[CEO 라운지] 등 — 칼럼·기획 제목이 캡션처럼 생겼다).
+#    [국감]·[2026 국감]·[국정감사]는 코너명이 아니라 예외(0-39).
 #  - 정책브리핑(korea.kr) — '제39차 방송미디어통신위원회 전체회의 브리핑'은 사진이 아니라 정부 브리핑 원문
 #  - 하마평 어휘(후보군·하마평·물망·거론) — '중기부 장관 후보군 오르내리는 김한규 의원'
 # 원본(0-37, 사용자 결정 2026-10-15 "김광일 페이지에도 반영, 일반기사가 걸리지 않도록"):
@@ -1484,8 +1485,17 @@ _CAP_POS = ("부총리|장관|차관|위원장|부위원장|상임위원|청장|
             "대표|의원|의장|대통령|총리|시장|지사|이사장|사장|회장|총장|대사|부사장")
 _CAP_SCENE_PAST = ("참석한|방문한|찾은|출석한|마친|귀국한|긴장한|퇴장한|입장한|제출한|선서한|도착한|자리한|등장한|"
                    "만난|나선|앉은|선|들어선")
-CAPTION_EXTRA = []   # 재경부판(생성기) — 김승모판 반영 때 켤 예정
+CAPTION_EXTRA = [
+    (re.compile(r"(?:^|(?<!에)\s)(?:[가-힣]*는|" + _CAP_SCENE_PAST + r")\s(?:\S+\s+){0,3}" + _CAP_SUR
+                + r"[가-힣]{1,2}(?:·" + _CAP_SUR + r"[가-힣]{1,2})*\s(?:\S+\s+){0,3}\S*(?:" + _CAP_POS + r")들?$"), 45, False),
+    (re.compile(r"^(?=.*" + _CAP_SUR + r"[가-힣]{1,2}\s(?:\S+\s+){0,2}\S*(?:" + _CAP_POS + r")(?=[\s,·]|$))"
+                r"(?!제\d+차).*\s(?:브리핑|발언|모두발언|인사말|개회사|환영사|기념촬영)$"), 40, False),
+    (re.compile(r"「[^」]*(?:포토|사진|pic)[^」]*」", re.I), 0, True),
+    (re.compile(r"\[\s*한\s?컷\s*\]"), 0, True),
+]
 _CAP_SKIP_RE = re.compile(r"후보군|하마평|물망|거론")
+# 대괄호여도 코너명이 아닌 것 — '[국감] 답변하는 이종욱 관세청장'(0-39)
+_CAP_NEUTRAL_TAG_RE = re.compile(r"^\s*(?:20\d\d\s*)?(?:국감|국정감사)(?:\s*20\d\d)?\s*$")
 
 
 def _caption_extra(title, link=""):
@@ -1496,9 +1506,10 @@ def _caption_extra(title, link=""):
     if "korea.kr" in (link or "") or "정책브리핑" in raw:
         return False
     s = strip_media_tail(clean(raw))
-    if re.search(r"\[[^\]]*\]", s) or _CAP_SKIP_RE.search(s):
+    tags = re.findall(r"\[([^\]]*)\]", s)
+    if any(not _CAP_NEUTRAL_TAG_RE.match(x) for x in tags) or _CAP_SKIP_RE.search(s):
         return False                                     # 코너명 달린 칼럼·기획, 하마평
-    s = re.sub(r"「[^」]*」", "", s).strip().rstrip("'’\" ")
+    s = re.sub(r"\[[^\]]*\]|「[^」]*」", "", s).strip().rstrip("'’\" ")
     if not s or re.search(r"[\"“”…?!]|\.\.\.", s) or re.search(ARTICLE_ENDINGS, s):
         return False
     for pat, maxlen, on_raw in CAPTION_EXTRA:
@@ -2467,12 +2478,13 @@ GROUP_ASSIGN_HOOK = None
 #    '쿠팡, 공정위 제재에 불복'의 공정위는 대상이다(가점 없음).
 # 판정 순서(앞에서 정해지면 끝): ①맨 앞 출입처 ②맨 앞 사람(이름 + 직함 또는 이름 + 출입처 + 직함) ③따옴표 안을
 # 지운 제목의 출입처 — 배정은 '대상'(을·를·에·겨냥·향해…)이 아닌 첫 출입처, 가점은 주어·화자 표지가 붙은 것만.
-ACTOR_ASSIGN = False   # 재경부판(생성기) — 김광일판 확인 뒤 켤 예정
-LIVE_ACTOR_BONUS = 0   # 재경부판(생성기)
+ACTOR_ASSIGN = True
+LIVE_ACTOR_BONUS = 2.0
 ACTOR_ALIASES = {"우주청": "우주항공청"}
 # 기관장 이름 씨앗(0-38) — DB 학습 전에 깔아 두는 {이름: 그룹}. DB 학습 결과가 있으면 그쪽이 이긴다.
 # 원본은 90일 DB로 충분해 비워 둔다. 새로 만든 변형판(DB가 며칠치뿐)이 생성기로 채운다.
-ACTOR_PEOPLE_SEED = {}
+ACTOR_PEOPLE_SEED = {'이형일': '재경부', '권대영': '재경부', '박홍기': '재경부', '구윤철': '재경부',
+                     '박홍근': '기획예산처', '조용범': '기획예산처', '이명호': '국가데이터처', '안형준': '국가데이터처', '이종욱': '관세청'}   # 재경부판(생성기)
 _ACTOR_POS = r"(?:제?[12]차관|부총리|장관|차관|부위원장|위원장|원장|상임위원|청장|차장|처장|실장|본부장|국장|대변인)"
 _ACTOR_OBJ_RE = re.compile(r"[ \t]*(?:을|를|에게|에는|에(?!서)|겨냥|향해|향한|상대로|비판|직격|저격|때리|맹폭|공격|공세|탓)")
 _ACTOR_SUBJ_RE = re.compile(r"[ \t]*(?:[,◇]|(?:은|는|이|가|도)(?![가-힣])|" + _ACTOR_POS + r")")
@@ -3116,7 +3128,7 @@ LIVE_MEDIA_MAJOR = {
     "JTBC", "JTBC뉴스", "TV조선", "채널A", "채널A 뉴스", "MBN", "YTN", "연합뉴스TV",                     # 종편·보도PP
     "연합뉴스", "뉴시스", "뉴스1",                                                                        # 통신 3사
 }
-LIVE_MEDIA_BOOST = {}   # 재경부판(생성기)
+LIVE_MEDIA_BOOST = {"*": [(LIVE_MEDIA_MAJOR, 1.0)]}
 
 
 def live_cluster_rank(clu, kind=None, group=None):
