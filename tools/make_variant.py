@@ -58,8 +58,10 @@ REPLACEMENTS = [
     # 재경부판은 하루 약 2,000건(원본 1,300건) — 90일이면 약 18만 건·75~80MB로 GitHub 파일 한도(100MB)에 가깝다(2026-10-15 실측).
     (NM, "RETENTION_DAYS = 90 ", "RETENTION_DAYS = 60 ", 1, False),
     # ---- news_monitor.py: 출입처 ----
-    (NM, r"DUTY_DATES = \{\n(?:    .*\n)*?\}\n",
-         "DUTY_DATES = {}   # 재경부판은 당직 모드를 쓰지 않는다(출입처가 곧 기본 검색어)\n", 1, True),
+    # 0-44(2026-10-18): 원본은 당직 출입처 8곳을 날마다 따로 수집한다(알림 없음, 뉴스레이다 '당직' 스위치로만 봄).
+    # 재경부판은 쓰지 않는다 — 켜 두면 이 판 출입처에 없는 당직 그룹(국토부·농식품부 등)을 매시간 수집해 DB만 커진다.
+    (NM, "DUTY_COLLECT = True\n",
+         "DUTY_COLLECT = False   # 재경부판은 당직 수집을 하지 않는다(생성기, 0-44)\n", 1, False),
     (NM, r"BASE_KEYWORDS = \[\n(?:.*\n)*?\]\n", NEW_BASE_KEYWORDS, 1, True),
     (NM, 'TEMP_KEYWORDS = {\n    "대미투자": "2026-09-23",\n}\n',
          "TEMP_KEYWORDS = {}\n", 1, False),
@@ -109,6 +111,7 @@ FORBIDDEN = {
 }
 # 생성한 news_monitor.py를 별도 프로세스로 import해 확인할 값(당직·임시 키워드가 꺼진 날짜 기준).
 EXPECT = {
+    "DUTY_ONLY_GROUPS": [],   # 0-44 — 당직 수집 꺼짐
     "KEYWORDS": ["재정경제부", "재경부", "기획예산처", "예산처", "국가데이터처", "데이터처", "관세청"],
     "GROUP_ORDER": ["재경부", "기획예산처", "국가데이터처", "관세청"],
     "BYLINE_NAME": REPORTER,
