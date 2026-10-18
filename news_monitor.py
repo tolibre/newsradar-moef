@@ -35,7 +35,7 @@ KST = datetime.timezone(datetime.timedelta(hours=9))
 #     digest 페이지(/·/archive/)와 excluded_log에는 넣지 않는다 — 비상용 백업은 본 출입처 그대로.
 #   - 보관: DUTY_RETENTION_DAYS일(당직 전용 기사만). 하루 수천 건이라 90일 보관이면 DB가 GitHub 파일 한도(100MB)를 넘는다.
 # 동료용 변형판은 생성기가 DUTY_COLLECT = False로 바꾼다(재경부판은 이 그룹들이 곧 본 출입처).
-DUTY_COLLECT = False   # 재경부판은 당직 수집을 하지 않는다(생성기, 0-44)
+DUTY_COLLECT = True
 DUTY_RETENTION_DAYS = 5        # 월요일 09:00 보고(금 13:30~)·연휴 하루 낀 보고까지 덮는 길이
 DUTY_KEYWORDS = [
     "재정경제부", "재경부",
