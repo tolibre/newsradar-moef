@@ -33,6 +33,8 @@ NEW_BASE_KEYWORDS = '''BASE_KEYWORDS = [
     # 재정경제부·재경부 → '재경부', 기획예산처·예산처 → '기획예산처', 국가데이터처·데이터처 → '국가데이터처'.
     # 관세청은 원본에 없어 아래 KEYWORD_GROUPS 줄에서 매핑을 더한다(2026-10-14 추가).
     "재정경제부", "재경부",
+    # 0-76(10/23 판별 점검, 사용자 "그러자"): 제목 판정 전용 — 풀에서 '재경차관' 제목 9건이 판정 밖 (KEYWORD_MAX_PAGES 0 — 네이버 검색 안 함).
+    "재경차관",
     "기획예산처", "예산처",
     "국가데이터처", "데이터처",
     "관세청",
@@ -42,7 +44,10 @@ NEW_BASE_KEYWORDS = '''BASE_KEYWORDS = [
 # 관세청을 KEYWORD_GROUPS에 넣는다 — 그래야 클러스터링의 '출입처명 토큰'(CLUSTER_AGENCY_TOKENS,
 # KEYWORD_GROUPS에서 유도)에 들어가 '관세청' 한 단어로 서로 다른 사안이 묶이지 않는다.
 NEW_GROUPS_LINE = ("KEYWORD_GROUPS.update(DUTY_KEYWORD_GROUPS)\n"
-                   "KEYWORD_GROUPS.update({'관세청': '관세청'})   # 재경부판(생성기)\n")
+                   "KEYWORD_GROUPS.update({'관세청': '관세청', '재경차관': '재경부'})   # 재경부판(생성기)\n")
+TITLE_ONLY = ["재경차관"]   # 0-76
+NEW_MAX_PAGES = ('KEYWORD_MAX_PAGES = {\n    "CBS": 1,\n    '
+                 + ", ".join(f'"{k}": 0' for k in TITLE_ONLY) + ",   # 재경부판(생성기) — 제목 판정 전용(0-76)\n}\n")
 
 # (파일, 찾을 문자열 또는 정규식, 바꿀 문자열, 원본에서 나와야 하는 횟수, 정규식 여부)
 NM = "news_monitor.py"
@@ -70,6 +75,7 @@ REPLACEMENTS = [
     (NM, 'TEMP_KEYWORDS = {\n    "대미투자": "2026-09-23",\n}\n',
          "TEMP_KEYWORDS = {}\n", 1, False),
     (NM, "KEYWORD_GROUPS.update(DUTY_KEYWORD_GROUPS)\n", NEW_GROUPS_LINE, 1, False),
+    (NM, 'KEYWORD_MAX_PAGES = {\n    "CBS": 1,\n}\n', NEW_MAX_PAGES, 1, False),   # 0-76
     # ---- news_monitor.py: 바이라인(본인 기사 섹션) ----
     (NM, 'BYLINE_NAME = "김광일"', f'BYLINE_NAME = "{REPORTER}"', 1, False),
     (NM, 'BYLINE_SECTION = "김광일 기자"', f'BYLINE_SECTION = "{REPORTER} 기자"', 1, False),
@@ -119,7 +125,8 @@ FORBIDDEN = {
 EXPECT = {
     "DUTY_ONLY_GROUPS": ET.duty_only(['재경부', '기획예산처', '국가데이터처', '관세청']),   # 0-73 — 경제정책팀 묶음 중 이 판 섹션이 아닌 것
     "EXCLUDE_TERMS": ["대한체육회", "스포츠공정위", "모의공정위"],   # 0-73 — 원본 값(당직으로 공정위를 검색)
-    "KEYWORDS": ["재정경제부", "재경부", "기획예산처", "예산처", "국가데이터처", "데이터처", "관세청"],
+    "KEYWORDS": ["재정경제부", "재경부", "재경차관", "기획예산처", "예산처", "국가데이터처", "데이터처", "관세청"],
+    "KEYWORD_MAX_PAGES": {"CBS": 1, "재경차관": 0},   # 0-76
     "GROUP_ORDER": ["재경부", "기획예산처", "국가데이터처", "관세청"],
     "BYLINE_NAME": REPORTER,
     "BYLINE_SECTION": f"{REPORTER} 기자",
